@@ -1,7 +1,7 @@
 HelloLeap
 =========
 
-![alt tag](icon.png)
+[![alt tag](icon.png)](http://youtu.be/NZuJxayxJvY)
 
 A simple program to visualize one hand skeleton
 
