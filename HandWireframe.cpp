@@ -63,19 +63,6 @@ static unsigned int fingersVS;
 static unsigned int fingersFS;
 
 static unsigned int fingerspositionBufferHandle;
-static unsigned int fingerscolorBufferHandle;
-static unsigned int fingerspositionIndexBufferHandle;
-
-static GLuint fingersIndex[40] = {
-    0,   1,  1,  2,  2,  3,  3,  4, // thumb
-    5,   6,  6,  7,  7,  8,  8,  9, // index
-    10, 11, 11, 12, 12, 13, 13, 14, // middle
-    15, 16, 16, 17, 17, 18, 18, 19, // ring
-    20, 21, 21, 22, 22, 23, 23, 24 // pinky
-    // 0, 1,
-    // 1, 2,
-    // 2, 0
-};
 ////////////////////////////////////////////////////////////////////////////////
 void glfw_window_resize_callback(GLFWwindow* window, int width, int height) {
     g_gl_width = width;
@@ -230,80 +217,6 @@ int InitOpenGL()
     glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
     
     ////////////////////////////////////////////////////////////////////////////////
-    const char* vertex_shader = readShader("shaders/hand.vert");
-    const char* fragment_shader = readShader("shaders/hand.frag");
-
-    unsigned int vs = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vs, 1, &vertex_shader, NULL);
-    glCompileShader(vs);
-    print_shader_info_log(vs);
-
-    unsigned int fs = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fs, 1, &fragment_shader, NULL);
-    glCompileShader(fs);
-    print_shader_info_log(fs);
-
-    shader_program = glCreateProgram();
-    glAttachShader(shader_program, fs);
-    glAttachShader(shader_program, vs);
-
-    glLinkProgram(shader_program);
-
-    glBindAttribLocation(shader_program, 0, "vp");
-    glBindAttribLocation(shader_program, 1, "vColor");
-    ////////////////////////////////////////////////////////////////////////////////
-    float points[] = {
-       //  0.0f,  .5f, 0.0f,
-       //   .5f, -.5f, 0.0f,
-       //  -.5f, -.5f, 0.0f,
-       //  -.5f,  .5f, 0.0f,
-       //  0.0f, -.5f, 0.0f,
-       // -1.0f, -.5f, 0.0f
-        // 0.0f,  .5f, 0.0f,
-        //  .5f, -.5f, 0.0f,
-        //  .5f, -.5f, 0.0f,
-        //  -.5f, -.5f, 0.0f,
-        //  -.5f, -.5f, 0.0f,
-        //  0.0f,  .5f, 0.0f
-        0.0f,  .5f, 0.0f,
-         .5f, -.5f, 0.0f,
-        -.5f, -.5f, 0.0f
-    };
-
-    float colors[] = {
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f
-    };
-
-    unsigned int vbo[3];
-    glGenBuffers(3, vbo);
-    unsigned int positionBufferHandle = vbo[0];
-    unsigned int colorBufferHandle = vbo[1];
-    positionIndexHandle = vbo[2];
-
-    glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
-    glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(float), points, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, colorBufferHandle);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), colors, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, positionIndexHandle);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(GLuint), pointInd, GL_STATIC_DRAW);
-
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    glBindBuffer(GL_ARRAY_BUFFER, colorBufferHandle);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    ////////////////////////////////////////////////////////////////////////////////
     const char* fingers_vertex_shader = readShader("shaders/fingers.vert");
     const char* fingers_fragment_shader = readShader("shaders/fingers.frag");
 
@@ -324,45 +237,22 @@ int InitOpenGL()
     glLinkProgram(fingersProgram);
 
     glBindAttribLocation(fingersProgram, 0, "fingerPos");
-    glBindAttribLocation(fingersProgram, 1, "fingerColor");
     ////////////////////////////////////////////////////////////////////////////////
-    glGenBuffers(3, fingersVBO);
+    glGenBuffers(1, fingersVBO);
     fingerspositionBufferHandle = fingersVBO[0];
-    fingerscolorBufferHandle = fingersVBO[1];
-    fingerspositionIndexBufferHandle = fingersVBO[2];
-
+    
     fingers = (float*)malloc(sizeof(float) * 120);
     
-    // fingers[0] = 0.0f;  fingers[1] = 0.5f;  fingers[2] = 0.0f;
-    // fingers[3] = 0.5f;  fingers[4] = -0.5f; fingers[5] = 0.0f;
-    // fingers[6] = -0.5f; fingers[7] = -0.5f; fingers[8] = 0.0f;
-    
-    fingercolors = (float*)malloc(sizeof(float) * 12);
-    
-    fingercolors[0] = 1.0f; fingercolors[1] = 0.0f; fingercolors[2] = 0.0f;
-    fingercolors[3] = 0.0f; fingercolors[4] = 1.0f; fingercolors[5] = 0.0f;
-    fingercolors[6] = 0.0f; fingercolors[7] = 0.0f; fingercolors[8] = 1.0f;
-
     glBindBuffer(GL_ARRAY_BUFFER, fingerspositionBufferHandle);
     glBufferData(GL_ARRAY_BUFFER, 120 * sizeof(float), fingers, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, fingerscolorBufferHandle);
-    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), fingercolors, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fingerspositionIndexBufferHandle);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 40 * sizeof(GLuint), fingersIndex, GL_STATIC_DRAW);
 
     glGenVertexArrays(1, &fingersVAO);
     glBindVertexArray(fingersVAO);
 
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
+    
     glBindBuffer(GL_ARRAY_BUFFER, fingerspositionBufferHandle);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    glBindBuffer(GL_ARRAY_BUFFER, fingerscolorBufferHandle);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
     ////////////////////////////////////////////////////////////////////////////////
     // create projection matrix and transformation matrix
@@ -480,10 +370,10 @@ void retrieveFrame(const Controller& controller)
                 Bone bone = finger.bone(boneType);
                 fingers[fc] = -bone.prevJoint().x/20.0;
                 fingers[fc+1] = -bone.prevJoint().y/20.0;
-                fingers[fc+2] = bone.prevJoint().z/20.0;
+                fingers[fc+2] = -bone.prevJoint().z/20.0;
                 fingers[fc+3] = -bone.nextJoint().x/20.0;
                 fingers[fc+4] = -bone.nextJoint().y/20.0;
-                fingers[fc+5] = bone.nextJoint().z/20.0;
+                fingers[fc+5] = -bone.nextJoint().z/20.0;
 
                 std::cout << std::string(6, ' ') << boneNames[boneType]
                           << " bone, start: " << bone.prevJoint()
@@ -643,25 +533,16 @@ int main(int argc, char** argv) {
         {
             // fill the vertex array for fingers
             retrieveFrame(controller);
-            // printFingers();
         }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        // glUseProgram(shader_program);
-        // glBindVertexArray(vao);
-        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, positionIndexHandle);
-        // glDrawElements(GL_LINES, 6, GL_UNSIGNED_INT, 0);
-
         glUseProgram(fingersProgram);
         glBindVertexArray(fingersVAO);
         glBindBuffer(GL_ARRAY_BUFFER, fingerspositionBufferHandle);
         glBufferData(GL_ARRAY_BUFFER, 120 * sizeof(float), fingers, GL_STATIC_DRAW);
-        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fingerspositionIndexBufferHandle);
-        // glLineWidth(20.0);
-        // glDrawElements(GL_LINES, 40, GL_UNSIGNED_INT, 0);
-        // glDrawElements(GL_LINE_STRIP, 40, GL_UNSIGNED_INT, 0);
-        glDrawArrays(GL_LINES, 0, 120);
+        
+        glDrawArrays(GL_LINES, 0, 40);
         glfwPollEvents();
         glfwSwapBuffers(window);
 
