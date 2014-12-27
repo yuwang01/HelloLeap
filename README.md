@@ -3,7 +3,7 @@ HelloLeap
 
 ![alt tag](icon.png)
 
-A simple program to visualize one hand skeleton
+A simple program to visualize one hand skeleton: [Demo](http://youtu.be/NZuJxayxJvY)
 
 Dependencies:
   * GLFW
